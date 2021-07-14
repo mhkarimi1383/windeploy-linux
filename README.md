@@ -16,3 +16,27 @@ Linux system (i.e., without booting from Windows installation ISO and without us
   * Currently supports only BIOS boot, not UEFI. But this should be easy
     to implement.
 
+## Additional resources
+
+  * [Create a windows system from scratch using Linux][from-scratch] -- forum thread at reboot.pro
+    that discusses attempts to achieve exactly this
+  * [NTDEV YouTube channel][NTDEV] -- videos from crazy Windows experiments and hacks
+
+### Windows boot process
+
+  * [Windows 7-10 Master Boot Record][MBR] -- disassembly and analysis
+  * [Windows 8-10 NTFS Volume Boot Record][VBR] -- disassembly and analysis
+
+#### BCD database
+
+
+
+### Windows installation process
+
+  * [Configuration passes in unattend.xml][passes]
+
+[MBR]: https://thestarman.pcministry.com/asm/mbr/W7MBR.htm
+[VBR]: https://thestarman.pcministry.com/asm/mbr/W8VBR.htm|
+[from-scratch]: http://reboot.pro/topic/20468-create-a-windows-system-from-scratch-using-linux/
+[passes]: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/how-configuration-passes-work
+[NTDEV]: https://www.youtube.com/c/NTDEV/videos
