@@ -24,12 +24,14 @@ Linux system (i.e., without booting from Windows installation ISO and without us
 
 ### Windows boot process
 
+  * [Windows Vista-10 Startup Process][nt6start] summarized on Wikipedia
   * [Windows 7-10 Master Boot Record][MBR] -- disassembly and analysis
   * [Windows 8-10 NTFS Volume Boot Record][VBR] -- disassembly and analysis
 
 #### BCD database
 
-
+  * [libbcd0][] -- Python library for reading/writing BCD databases
+  * [BCD notes, observations, experiments][bcdnotes]
 
 ### Windows installation process
 
@@ -40,3 +42,6 @@ Linux system (i.e., without booting from Windows installation ISO and without us
 [from-scratch]: http://reboot.pro/topic/20468-create-a-windows-system-from-scratch-using-linux/
 [passes]: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/how-configuration-passes-work
 [NTDEV]: https://www.youtube.com/c/NTDEV/videos
+[libbcd0]: https://github.com/wodny/libbcd0/
+[bcdnotes]: https://thestarman.pcministry.com/asm/mbr/BCD.htm
+[nt6start]: https://en.wikipedia.org/wiki/Windows_NT_6_startup_process
