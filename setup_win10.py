@@ -12,6 +12,11 @@ import subprocess
 import tempfile
 import parted
 
+my_dir = Path(__file__).parent
+if str(my_dir) not in sys.path:
+    # allow postprocess scripts to import our python modules, especially ntfs_acl
+    os.environ['PYTHONPATH'] = f"{my_dir}:{os.environ.get('PYTHONPATH','')}"
+
 def is_part(pth):
     pth = Path(pth)
     if not pth.is_block_device(): raise RuntimeError("Not a block device, cannot determine partition-ness")
@@ -122,41 +127,48 @@ def copy_boot_files(dir):
     shutil.copy(Path(__file__).parent / 'BCD', ci_lookup(boot_dir, 'BCD', creating=True))
 
 
-def setup_part(part, wim, image_name, *, unattend=None, postproc=None):
-    format_part(part)
+def setup_part(part, wim, image_name, *, unattend=None, postproc=None, postproc_only=False):
+    if not postproc_only:
+        format_part(part)
+        apply_wim(part, wim, image_name)
     setup_vbr(part)
-    apply_wim(part, wim, image_name)
     with with_mounted(part) as dir:
         copy_boot_files(dir)
         if unattend:
             trg = ci_lookup(dir, 'Windows', 'Panther', 'unattend.xml', creating=True, parents=True)
             print(f"Copying unattend file: {unattend} -> {trg}")
             shutil.copy(unattend, trg)
-        if postproc:
-            if '/' not in postproc: postproc = f"./{postproc}"
-            subprocess.run([str(postproc), dir])
+        for script in postproc:
+            script = str(script)
+            if '/' not in script: script = f"./{script}"
+            print("Running script", script, file=sys.stderr)
+            subprocess.run([str(script), dir], check=True)
 
 
 def exactly_one(*a):
     return sum( bool(x) for x in a ) == 1
 
-def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=None, postproc=None):
+def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=None,
+        postproc:(str,clize.parameters.multi())=[], openssh_server=False,
+        postproc_only=False):
     if not exactly_one(disk, part):
         raise ArgumentError("You must specify exactly one of 'disk', 'part'")
-    if not exactly_one(wim, iso):
+    if not (exactly_one(wim, iso) or postproc_only):
         raise ArgumentError("You must specify exactly one of 'wim', 'iso'")
+    if openssh_server:
+        postproc.append(my_dir / 'postproc/openssh-server/setup.sh')
     with ExitStack() as es:
         if iso:
             wim = es.enter_context(with_iso(iso))
         if disk:
-            create_partitions(disk)
+            if not postproc_only: create_partitions(disk)
             with with_device(disk) as dev:
-                create_partitions(dev)
-                setup_mbr(dev)
+                #create_partitions(dev)
+                if not postproc_only: setup_mbr(dev)
                 part = part_path(dev, 1)
-                setup_part(part, wim, image_name, unattend=unattend, postproc=postproc)
+                setup_part(part, wim, image_name, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
         else:
-            setup_part(part, unattend=unattend, postproc=postproc)
+            setup_part(part, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
 
 if __name__ == '__main__':
     clize.run(main)
