@@ -22,7 +22,7 @@ Windows Registry Editor Version 5.00
 "AllowSearchToUseLocation"=dword:00000000
 "ConnectedSearchUseWeb"=dword:00000000
 
-[HKEY_USERS\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Search]
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search]
 "DeviceHistoryEnabled"=dword:00000000
 "AllowSearchToUseLocation"=dword:00000000
 "BingSearchEnabled"=dword:00000000
