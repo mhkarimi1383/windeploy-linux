@@ -27,3 +27,4 @@ import_hive() {
 import_hive "$regfile" 'HKEY_LOCAL_MACHINE\SYSTEM'   "$mnt/Windows/System32/config/SYSTEM"
 import_hive "$regfile" 'HKEY_LOCAL_MACHINE\SOFTWARE' "$mnt/Windows/System32/config/SOFTWARE"
 
+import_hive "$regfile" 'HKEY_CURRENT_USER'      "$mnt/Users/Default/NTUSER.DAT"
