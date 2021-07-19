@@ -20,5 +20,7 @@ apply_sd_recursively(
             ACE(ACE.ALLOW, MASK_FULL_CONTROL, SID_SYSTEM),
             ACE(ACE.ALLOW, MASK_FULL_CONTROL, SID_ADMINISTRATORS) ,
             ACE(ACE.ALLOW, MASK_READ_EXECUTE, SID_EVERYONE)
-        ], dacl_inherit=False)
+        ], dacl_inherit=False),
+        set_owner=True,
+        set_group=True,
 )

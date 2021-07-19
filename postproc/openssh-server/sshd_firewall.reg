@@ -1,0 +1,5 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules]
+"sshd"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=22|Name=sshd|"
+

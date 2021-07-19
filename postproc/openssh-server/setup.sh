@@ -14,5 +14,6 @@ fi
 cp -rT OpenSSH-Win64 "$mnt/Program Files/OpenSSH"
 
 hivexregedit --merge --prefix 'HKEY_LOCAL_MACHINE\SYSTEM' "$mnt"/Windows/System32/config/SYSTEM "$my_dir/sshd_service.reg"
+hivexregedit --merge --prefix 'HKEY_LOCAL_MACHINE\SYSTEM' "$mnt"/Windows/System32/config/SYSTEM "$my_dir/sshd_firewall.reg"
 "$my_dir/openssh_acl.py" "$mnt"
 

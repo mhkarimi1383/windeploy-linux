@@ -150,13 +150,15 @@ def exactly_one(*a):
 
 def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=None,
         postproc:(str,clize.parameters.multi())=[], openssh_server=False,
-        postproc_only=False):
+        debloat=False, postproc_only=False):
     if not exactly_one(disk, part):
         raise ArgumentError("You must specify exactly one of 'disk', 'part'")
     if not (exactly_one(wim, iso) or postproc_only):
         raise ArgumentError("You must specify exactly one of 'wim', 'iso'")
     if openssh_server:
         postproc.append(my_dir / 'postproc/openssh-server/setup.sh')
+    if debloat:
+        postproc.append(my_dir / 'postproc/debloat/setup.sh')
     with ExitStack() as es:
         if iso:
             wim = es.enter_context(with_iso(iso))
