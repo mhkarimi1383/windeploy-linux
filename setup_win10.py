@@ -40,7 +40,8 @@ def with_device(pth):
         finally:
             subprocess.run(['losetup', '-d', dev])
     elif pth.is_block_device():
-        pass
+        subprocess.run(['partprobe', dev])
+        yield dev
 
 def ci_lookup(base, *comps, creating=False, parents=False):
     """Lookup path components case-insensitively"""
