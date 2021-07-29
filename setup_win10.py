@@ -39,7 +39,9 @@ def with_device(pth):
         finally:
             subprocess.run(['losetup', '-d', dev])
     elif pth.is_block_device():
+        time.sleep(1)
         subprocess.run(['partprobe', pth])
+        time.sleep(1)
         yield pth
 
 def ci_lookup(base, *comps, creating=False, parents=False):
