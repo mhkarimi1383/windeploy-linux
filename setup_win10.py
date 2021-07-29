@@ -14,9 +14,8 @@ import parted
 from ntfs_acl import *
 
 my_dir = Path(__file__).parent
-if str(my_dir) not in sys.path:
-    # allow postprocess scripts to import our python modules, especially ntfs_acl
-    os.environ['PYTHONPATH'] = f"{my_dir}:{os.environ.get('PYTHONPATH','')}"
+# allow postprocess scripts to import our python modules, especially ntfs_acl
+os.environ['PYTHONPATH'] = f"{my_dir}:{os.environ.get('PYTHONPATH','')}"
 
 def is_part(pth):
     pth = Path(pth)
