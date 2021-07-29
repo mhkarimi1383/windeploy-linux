@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import parted
+from ntfs_acl import *
 
 my_dir = Path(__file__).parent
 if str(my_dir) not in sys.path:
@@ -138,6 +139,16 @@ def setup_part(part, wim, image_name, *, unattend=None, postproc=None, postproc_
             trg = ci_lookup(dir, 'Windows', 'Panther', 'unattend.xml', creating=True, parents=True)
             print(f"Copying unattend file: {unattend} -> {trg}")
             shutil.copy(unattend, trg)
+
+            # Unattend.xml may contain sensitive information, including administrator's
+            # password. We must protect it with correct ACLs.
+            write_sd(
+                    trg,
+                    SecurityDescriptor(dacl=[
+                        ACE(ACE.ALLOW, MASK_FULL_CONTROL, SID_SYSTEM),
+                        ACE(ACE.ALLOW, MASK_FULL_CONTROL, SID_ADMINISTRATORS) ,
+                    ], dacl_inherit=False),
+            )
         for script in postproc:
             script = str(script)
             if '/' not in script: script = f"./{script}"

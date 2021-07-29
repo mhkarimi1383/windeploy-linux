@@ -293,6 +293,8 @@ class SID(Constructable):
 
 SID_ADMINISTRATORS = SID('S-1-5-32-544') # the built-in Administrators group
 SID_SYSTEM = SID('S-1-5-18') # the Local System (NT AUTHORITY\SYSTEM) account
+SID_USERS = SID('S-1-5-32-545')
+SID_AUTH_USERS = SID('S-1-5-11') # Authenticated Users
 SID_EVERYONE = SID('S-1-1-0')
 
 # as empiricaly set by Windows 10
