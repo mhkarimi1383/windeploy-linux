@@ -114,11 +114,12 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\FindMyDevice]
 "AllowFindMyDevice"=dword:00000000
 
-; Disable the AppReadiness service that installs a lot of bloatware apps from MS store
-; on first user login. Note that this includes important apps such as the Windows
-; Settings app. These have to be installed manually.
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\AppReadiness]
-"Start"=dword:00000004
+;; ; Disable the AppReadiness service that installs a lot of bloatware apps from MS store
+;; ; on first user login. Note that this includes important apps such as the Windows
+;; ; Settings app. These have to be installed manually.
+;; [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\AppReadiness]
+;; "Start"=dword:00000004
+;; ; XX This currently breaks some Windows updates (e.g. KB5004237). Needs further investigation.
 
 ; https://gist.github.com/carcheky/981fda4af8e5aac73d0ca8558947ffbb
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager]
