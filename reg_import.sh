@@ -10,7 +10,7 @@ extract_prefix() {
     cat "$regfile" \
         | dos2unix \
         | grep -E '^[^;]' \
-        | awk '/^Windows Re/ { print;  want=1;   next;} /^\['"$prefix_esc"'/ { want=1; print ""; print; next;} /^\[/ { want=0; } (want) { print;}' \
+        | awk '/^Windows Re/ { print;  want=1;   next;} /^\[-?'"$prefix_esc"'/ { want=1; print ""; print; next;} /^\[/ { want=0; } (want) { print;}' \
         | sed -re 's/CurrentControlSet/ControlSet001/g'
 }
 

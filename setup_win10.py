@@ -82,7 +82,7 @@ def with_mounted(part):
     with ExitStack() as es:
         dir = Path(tempfile.mkdtemp(prefix=f"ntfs_{part.name}_"))
         es.callback(lambda: dir.rmdir())
-        subprocess.run(['ntfs-3g', str(part), dir], check=True)
+        subprocess.run(['ntfs-3g', '-o', 'remove_hiberfile', str(part), dir], check=True)
         es.callback(lambda: subprocess.run(['umount', dir]))
         yield dir
 
