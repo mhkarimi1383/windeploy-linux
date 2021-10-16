@@ -43,6 +43,8 @@ def with_device(pth):
         subprocess.run(['partprobe', pth])
         time.sleep(1)
         yield pth
+    else:
+        raise Exception(f"'{pth}' is neither a file nor a block device")
 
 def ci_lookup(base, *comps, creating=False, parents=False):
     """Lookup path components case-insensitively"""
@@ -204,6 +206,9 @@ def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=
                 #create_partitions(dev)
                 if not postproc_only and not efi: setup_mbr(dev)
                 part = part_path(dev, 1)
+                if efi and not postproc_only: # format ESP
+                    esp = part_path(dev, 2)
+                    cmd = ['mkfs.fat', '-F32', str(esp)]
                 setup_part(part, wim, image_name, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
         else:
             setup_part(part, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
