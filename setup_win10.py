@@ -86,21 +86,44 @@ def with_mounted(part):
         es.callback(lambda: subprocess.run(['umount', dir]))
         yield dir
 
+ESP_SIZE = 300 # MiB
 
-def create_partitions(dev):
+def create_partitions(dev, *, efi=False):
     with open(dev, 'r+b') as fh:
-        fh.write(bytearray(4096)) # clear MBR and other metadata
+        fh.write(bytearray(1024*1024)) # clear MBR and other metadata
 
     device = parted.Device(str(dev))
-    disk = parted.freshDisk(device, 'msdos')
-    geometry = parted.Geometry(device=device, start=2048,
-                               length=device.getLength() - 2048)
+    if efi:
+        ptype = 'gpt'
+        extra_space = esp_sec = parted.sizeToSectors(ESP_SIZE, "MiB", device.sectorSize)
+    else:
+        ptype = 'msdos'
+        extra_space = 0
+
+
+    disk = parted.freshDisk(device, ptype)
+    start = parted.sizeToSectors(1, "MiB", device.sectorSize)
+    geometry = parted.Geometry(device=device, start=start,
+                               length=device.getLength() - start - extra_space)
     filesystem = parted.FileSystem(type='ntfs', geometry=geometry)
     partition = parted.Partition(disk=disk, type=parted.PARTITION_NORMAL,
                                  fs=filesystem, geometry=geometry)
     disk.addPartition(partition=partition,
                       constraint=device.optimalAlignedConstraint)
-    partition.setFlag(parted.PARTITION_BOOT)
+
+    if not efi:
+        partition.setFlag(parted.PARTITION_BOOT)
+
+    if efi: # create ESP
+        geometry = parted.Geometry(device=device, start=device.getLength() - esp_sec,
+                                   length=esp_sec)
+        filesystem = parted.FileSystem(type='fat32', geometry=geometry)
+        partition = parted.Partition(disk=disk, type=parted.PARTITION_NORMAL,
+                                     fs=filesystem, geometry=geometry)
+        disk.addPartition(partition=partition,
+                          constraint=device.optimalAlignedConstraint)
+        partition.setFlag(parted.PARTITION_BOOT)
+
     disk.commit()
 
 
@@ -163,7 +186,7 @@ def exactly_one(*a):
 
 def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=None,
         postproc:(str,clize.parameters.multi())=[], openssh_server=False,
-        debloat=False, postproc_only=False):
+        debloat=False, postproc_only=False, efi=False):
     if not exactly_one(disk, part):
         raise ArgumentError("You must specify exactly one of 'disk', 'part'")
     if not (exactly_one(wim, iso) or postproc_only):
@@ -176,10 +199,10 @@ def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=
         if iso:
             wim = es.enter_context(with_iso(iso))
         if disk:
-            if not postproc_only: create_partitions(disk)
+            if not postproc_only: create_partitions(disk, efi=efi)
             with with_device(disk) as dev:
                 #create_partitions(dev)
-                if not postproc_only: setup_mbr(dev)
+                if not postproc_only and not efi: setup_mbr(dev)
                 part = part_path(dev, 1)
                 setup_part(part, wim, image_name, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
         else:
