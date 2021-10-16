@@ -97,7 +97,9 @@ def create_partitions(dev, *, efi=False):
     device = parted.Device(str(dev))
     if efi:
         ptype = 'gpt'
-        extra_space = esp_sec = parted.sizeToSectors(ESP_SIZE, "MiB", device.sectorSize)
+        esp_sec = parted.sizeToSectors(ESP_SIZE, "MiB", device.sectorSize)
+        end_pad = parted.sizeToSectors(1, "MiB", device.sectorSize) # leave space for secondary part table at the end
+        extra_space = esp_sec + end_pad
     else:
         ptype = 'msdos'
         extra_space = 0
@@ -117,7 +119,7 @@ def create_partitions(dev, *, efi=False):
         partition.setFlag(parted.PARTITION_BOOT)
 
     if efi: # create ESP
-        geometry = parted.Geometry(device=device, start=device.getLength() - esp_sec,
+        geometry = parted.Geometry(device=device, start=device.getLength() - esp_sec - end_pad,
                                    length=esp_sec)
         filesystem = parted.FileSystem(type='fat32', geometry=geometry)
         partition = parted.Partition(disk=disk, type=parted.PARTITION_NORMAL,
@@ -153,6 +155,7 @@ def copy_boot_files(dir):
     boot_dir = ci_lookup(dir, 'Boot', creating=True)
     boot_dir.mkdir(exist_ok=True)
     shutil.copy(Path(__file__).parent / 'BCD', ci_lookup(boot_dir, 'BCD', creating=True))
+
 
 
 def setup_part(part, wim, image_name, *, unattend=None, postproc=None, postproc_only=False):
