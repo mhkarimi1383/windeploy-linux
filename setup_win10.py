@@ -46,14 +46,16 @@ def with_device(pth):
     else:
         raise Exception(f"'{pth}' is neither a file nor a block device")
 
-def ci_lookup(base, *comps, creating=False, parents=False):
+def ci_lookup(base, *comps, creating=False, parents=False, mkdir=False):
     """Lookup path components case-insensitively"""
     cur = Path(base)
     for idx, comp in enumerate(comps):
         cands = [ item for item in cur.iterdir() if  item.name.lower() == comp.lower() ]
         if not cands:
-            if creating and idx == len(comps) - 1:
+            if (creating or mkdir) and idx == len(comps) - 1:
                 cur = cur / comp
+                if mkdir:
+                    cur.mkdir(exist_ok=True)
                 break
             elif parents and idx < len(comps) - 1:
                 cur = cur / comp
@@ -79,12 +81,16 @@ def with_iso(iso):
         yield wim
 
 @contextmanager
-def with_mounted(part):
+def with_mounted(part, *, fs='ntfs'):
     part = Path(part)
     with ExitStack() as es:
-        dir = Path(tempfile.mkdtemp(prefix=f"ntfs_{part.name}_"))
+        dir = Path(tempfile.mkdtemp(prefix=f"win10_mnt_{part.name}_"))
         es.callback(lambda: dir.rmdir())
-        subprocess.run(['ntfs-3g', '-o', 'remove_hiberfile', str(part), dir], check=True)
+        if fs == 'ntfs':
+            cmd = ['ntfs-3g', '-o', 'remove_hiberfile', str(part), dir]
+        elif fs == 'fat':
+            cmd = ['mount', '-t', 'vfat', str(part), dir]
+        subprocess.run(cmd, check=True)
         es.callback(lambda: subprocess.run(['umount', dir]))
         yield dir
 
@@ -156,6 +162,25 @@ def copy_boot_files(dir):
     boot_dir.mkdir(exist_ok=True)
     shutil.copy(Path(__file__).parent / 'BCD', ci_lookup(boot_dir, 'BCD', creating=True))
 
+def copy_efi_files(win_mnt, esp_mnt):
+    efi_boot = ci_lookup(esp_mnt, 'EFI', 'Boot', mkdir=True, parents=True)
+    efi_ms = ci_lookup(esp_mnt, 'EFI', 'Microsoft', mkdir=True, parents=True)
+    efi_ms_boot = ci_lookup(efi_ms, 'Boot', mkdir=True)
+    efi_ms_boot_res = ci_lookup(efi_ms_boot, 'Resources', mkdir=True)
+    efi_ms_boot_fonts = ci_lookup(efi_ms_boot, 'Fonts', mkdir=True)
+    efi_ms_recovery = ci_lookup(efi_ms, 'Recovery', mkdir=True)
+    win_boot = ci_lookup(win_mnt, 'Windows', 'Boot')
+    win_boot_efi = ci_lookup(win_boot, 'EFI')
+    win_boot_res = ci_lookup(win_boot, 'Resources')
+    win_boot_fonts = ci_lookup(win_boot, 'Fonts')
+    bootmgfw = ci_lookup(win_boot_efi, 'bootmgfw.efi')
+    bootx64 = ci_lookup(efi_boot, 'bootx64.efi', creating=True)
+    shutil.copy(bootmgfw, bootx64)
+    shutil.copytree(win_boot_efi,   efi_ms_boot,       dirs_exist_ok=True)
+    shutil.copytree(win_boot_res,   efi_ms_boot_res,   dirs_exist_ok=True)
+    shutil.copytree(win_boot_fonts, efi_ms_boot_fonts, dirs_exist_ok=True)
+    
+
 
 
 def setup_part(part, wim, image_name, *, unattend=None, postproc=None, postproc_only=False):
@@ -209,10 +234,13 @@ def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=
                 #create_partitions(dev)
                 if not postproc_only and not efi: setup_mbr(dev)
                 part = part_path(dev, 1)
+                if efi: esp = part_path(dev, 2)
                 if efi and not postproc_only: # format ESP
-                    esp = part_path(dev, 2)
                     subprocess.run(['mkfs.fat', '-F32', '-n', 'ESP', str(esp)], check=True)
                 setup_part(part, wim, image_name, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
+                if efi: # copy EFI boot files
+                    with with_mounted(part) as win_mnt, with_mounted(esp, fs='fat') as esp_mnt:
+                        copy_efi_files(win_mnt, esp_mnt)
         else:
             setup_part(part, unattend=unattend, postproc=postproc, postproc_only=postproc_only)
 
