@@ -13,8 +13,7 @@ Linux system (i.e., without booting from Windows installation ISO and without us
 
 ## Limitations
 
-  * Currently supports only BIOS boot, not UEFI. But this should be easy
-    to implement.
+  * Only limited partitioning options -- it can just erase whole disk and create a single partition.
 
 ## Additional resources
 
