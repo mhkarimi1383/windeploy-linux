@@ -179,6 +179,7 @@ def copy_efi_files(win_mnt, esp_mnt):
     shutil.copytree(win_boot_efi,   efi_ms_boot,       dirs_exist_ok=True)
     shutil.copytree(win_boot_res,   efi_ms_boot_res,   dirs_exist_ok=True)
     shutil.copytree(win_boot_fonts, efi_ms_boot_fonts, dirs_exist_ok=True)
+    shutil.copy(Path(__file__).parent / 'BCD-efi', ci_lookup(efi_ms_boot, 'BCD', creating=True))
     
 
 
