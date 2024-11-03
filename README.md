@@ -32,6 +32,7 @@ Linux system (i.e., without booting from Windows installation ISO and without us
   * [libbcd0][] -- Python library for reading/writing BCD databases
   * [BCD notes, observations, experiments][bcdnotes]
   * [BCD elements][bcdelem]
+  * [toolsnt][] -- A Rust library and CLI tool for manipulating BCD from Linux
 
 ### Windows installation process
 
@@ -46,3 +47,4 @@ Linux system (i.e., without booting from Windows installation ISO and without us
 [bcdnotes]: https://thestarman.pcministry.com/asm/mbr/BCD.htm
 [nt6start]: https://en.wikipedia.org/wiki/Windows_NT_6_startup_process
 [bcdelem]: https://www.geoffchappell.com/notes/windows/boot/bcd/elements.htm
+[toolsnt]: https://codeberg.org/erin/toolsnt
