@@ -3,6 +3,9 @@
 This is a simple Python script that installs Windows 10 to a target disk from a running
 Linux system (i.e., without booting from Windows installation ISO and without using Windows PE).
 
+**Update 2025-01-12: Also works with Windows 11.** (And currently, it seems to bypass
+TMP requirements by default. Can be even installed on non-EFI BIOS.)
+
 ## Use cases
 
   * Mass-install Windows workstations from a PXE-booted Linux environment.
