@@ -1,6 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
-import sys,os,shutil
+import sys
+import os
+import shutil
 import time
 import string
 import clize
@@ -247,6 +249,3 @@ def main(*, disk=None, part=None, wim=None, iso=None, image_name=None, unattend=
 
 if __name__ == '__main__':
     clize.run(main)
-
-
-
