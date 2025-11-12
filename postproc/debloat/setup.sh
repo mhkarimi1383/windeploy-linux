@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 mnt="$(readlink -f "$1")"
 cd "$(dirname "$0")"
