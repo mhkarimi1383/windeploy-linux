@@ -24,6 +24,7 @@ For that you need
 * git
 * parted
 * ntfs-3g
+* ms-sys
 
 ```bash
 git clone https://github.com/mhkarimi1383/windeploy-linux
