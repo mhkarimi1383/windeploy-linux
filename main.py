@@ -275,7 +275,7 @@ def main(
     part: str | None = typer.Option(None, help="Partition device"),
     wim: str | None = typer.Option(None, help="WIM file"),
     iso: str | None = typer.Option(None, help="ISO file"),
-    image_name: str | None = typer.Option(None, help="Image name"),
+    image_name: str = typer.Option(help="Image name"),
     unattend: str | None = typer.Option(None, help="Unattend file"),
     openssh_server: bool = typer.Option(False, help="Setup OpenSSH server"),
     debloat: bool = typer.Option(False, help="Debloat Windows"),
@@ -300,6 +300,8 @@ def main(
         raise typer.BadParameter(f"Not a file: {wim}")
     if iso and not Path(iso).is_file():
         raise typer.BadParameter(f"Not a file: {iso}")
+    if unattend and not Path(unattend).is_file():
+        raise typer.BadParameter(f"Not a file: {unattend}")
 
     with ExitStack() as es:
         if iso:

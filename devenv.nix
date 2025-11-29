@@ -11,6 +11,7 @@
     git
     wimlib
     parted
+    ntfs3g
   ];
   languages = {
     python = {
