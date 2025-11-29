@@ -1,0 +1,19 @@
+[project]
+name = "windeploy-linux"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "construct>=2.10.70",
+    "pyparted>=3.13.0",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+windeploy-linux = "main:app"
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.17.0", # experimental (try to build a standalone executable)
+]

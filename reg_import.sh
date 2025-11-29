@@ -6,7 +6,8 @@ regfile="$2"
 extract_prefix() {
     local regfile="$1"
     local prefix="$2"
-    local prefix_esc="$(echo "$prefix" | sed -re 's#\\#\\\\#g')"
+    local prefix_esc
+    prefix_esc="$(echo "$prefix" | sed -re 's#\\#\\\\#g')"
     cat "$regfile" \
         | dos2unix \
         | grep -E '^[^;]' \

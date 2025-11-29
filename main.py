@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 import shutil
 import time
 import string
-import clize
-from clize import ArgumentError, Parameter
-import argparse
-from contextlib import *
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 import subprocess
 import tempfile
 import parted
 from ntfs_acl import *
+import typer
+from typing import Final
 
-my_dir = Path(__file__).parent
+app = typer.Typer(
+    name="windeploy-linux",
+    help="Deploy Windows from Linux",
+)
+
+my_dir: Final[Path] = Path(__file__).parent
 # allow postprocess scripts to import our python modules, especially ntfs_acl
-os.environ["PYTHONPATH"] = f"{my_dir}:{os.environ.get('PYTHONPATH', '')}"
+os.environ["PYTHONPATH"] = f"{my_dir}:{os.environ.get('PYTHONPATH', '')}"  # type: ignore
 
+ESP_SIZE: Final[int] = 300  # MiB
 
 def is_part(pth):
     pth = Path(pth)
@@ -90,7 +94,7 @@ def with_iso(iso):
             ["mount", "-o", "loop,ro", "-t", "udf", str(iso), str(dir)], check=True
         )
         es.callback(lambda: subprocess.run(["umount", dir]))
-        wim = ci_lookup(dir, "sources", "install.wim")
+        wim = str(ci_lookup(dir, "sources", "install.wim"))
         yield wim
 
 
@@ -100,6 +104,7 @@ def with_mounted(part, *, fs="ntfs"):
     with ExitStack() as es:
         dir = Path(tempfile.mkdtemp(prefix=f"win10_mnt_{part.name}_"))
         es.callback(lambda: dir.rmdir())
+        cmd = ["mount", str(part), dir]
         if fs == "ntfs":
             cmd = ["ntfs-3g", "-o", "remove_hiberfile", str(part), dir]
         elif fs == "fat":
@@ -108,15 +113,13 @@ def with_mounted(part, *, fs="ntfs"):
         es.callback(lambda: subprocess.run(["umount", dir]))
         yield dir
 
-
-ESP_SIZE = 300  # MiB
-
-
 def create_partitions(dev, *, efi=False):
     with open(dev, "r+b") as fh:
         fh.write(bytearray(1024 * 1024))  # clear MBR and other metadata
 
     device = parted.Device(str(dev))
+    esp_sec = None
+    end_pad = None
     if efi:
         ptype = "gpt"
         esp_sec = parted.sizeToSectors(ESP_SIZE, "MiB", device.sectorSize)
@@ -139,8 +142,6 @@ def create_partitions(dev, *, efi=False):
     )
     disk.addPartition(partition=partition, constraint=device.optimalAlignedConstraint)
 
-    if not efi:
-        partition.setFlag(parted.PARTITION_BOOT)
 
     if efi:  # create ESP
         geometry = parted.Geometry(
@@ -153,7 +154,8 @@ def create_partitions(dev, *, efi=False):
         disk.addPartition(
             partition=partition, constraint=device.optimalAlignedConstraint
         )
-        partition.setFlag(parted.PARTITION_BOOT)
+
+    partition.setFlag(parted.PARTITION_BOOT)
 
     disk.commit()
 
@@ -266,29 +268,39 @@ def setup_part(
 def exactly_one(*a):
     return sum(bool(x) for x in a) == 1
 
-
+@app.command()
 def main(
     *,
-    disk=None,
-    part=None,
-    wim=None,
-    iso=None,
-    image_name=None,
-    unattend=None,
-    openssh_server=False,
-    debloat=False,
-    postproc_only=False,
-    efi=False,
+    disk: str | None = typer.Option(None, help="Disk device"),
+    part: str | None = typer.Option(None, help="Partition device"),
+    wim: str | None = typer.Option(None, help="WIM file"),
+    iso: str | None = typer.Option(None, help="ISO file"),
+    image_name: str | None = typer.Option(None, help="Image name"),
+    unattend: str | None = typer.Option(None, help="Unattend file"),
+    openssh_server: bool = typer.Option(False, help="Setup OpenSSH server"),
+    debloat: bool = typer.Option(False, help="Debloat Windows"),
+    postproc_only: bool = typer.Option(False, help="Only run postprocess scripts"),
+    efi: bool = typer.Option(False, help="Use EFI"),
 ):
     postproc = []
     if not exactly_one(disk, part):
-        raise ArgumentError("You must specify exactly one of 'disk', 'part'")
+        raise typer.BadParameter("You must specify exactly one of 'disk', 'part'")
     if not (exactly_one(wim, iso) or postproc_only):
-        raise ArgumentError("You must specify exactly one of 'wim', 'iso'")
+        raise typer.BadParameter("You must specify exactly one of 'wim', 'iso'")
     if openssh_server:
         postproc.append(my_dir / "postproc/openssh-server/setup.sh")
     if debloat:
         postproc.append(my_dir / "postproc/debloat/setup.sh")
+
+    if disk and not Path(disk).is_block_device():
+        raise typer.BadParameter(f"Not a block device: {disk}")
+    if part and not Path(part).is_block_device():
+        raise typer.BadParameter(f"Not a block device: {part}")
+    if wim and not Path(wim).is_file():
+        raise typer.BadParameter(f"Not a file: {wim}")
+    if iso and not Path(iso).is_file():
+        raise typer.BadParameter(f"Not a file: {iso}")
+
     with ExitStack() as es:
         if iso:
             wim = es.enter_context(with_iso(iso))
@@ -296,7 +308,6 @@ def main(
             if not postproc_only:
                 create_partitions(disk, efi=efi)
             with with_device(disk) as dev:
-                # create_partitions(dev)
                 if not postproc_only and not efi:
                     setup_mbr(dev)
                 part = part_path(dev, 1)
@@ -328,4 +339,4 @@ def main(
 
 
 if __name__ == "__main__":
-    clize.run(main)
+    app()
