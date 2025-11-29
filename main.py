@@ -255,7 +255,7 @@ def setup_part(
                     dacl_inherit=False,
                 ),
             )
-        for script in postproc:
+        for script in (postproc or []):
             script = str(script)
             if "/" not in script:
                 script = f"./{script}"
@@ -275,12 +275,12 @@ def main(
     iso=None,
     image_name=None,
     unattend=None,
-    postproc: (str, clize.parameters.multi()) = [],
     openssh_server=False,
     debloat=False,
     postproc_only=False,
     efi=False,
 ):
+    postproc = []
     if not exactly_one(disk, part):
         raise ArgumentError("You must specify exactly one of 'disk', 'part'")
     if not (exactly_one(wim, iso) or postproc_only):
@@ -300,6 +300,7 @@ def main(
                 if not postproc_only and not efi:
                     setup_mbr(dev)
                 part = part_path(dev, 1)
+                esp = None
                 if efi:
                     esp = part_path(dev, 2)
                 if efi and not postproc_only:  # format ESP
@@ -314,7 +315,7 @@ def main(
                     postproc=postproc,
                     postproc_only=postproc_only,
                 )
-                if efi:  # copy EFI boot files
+                if esp:  # copy EFI boot files
                     with (
                         with_mounted(part) as win_mnt,
                         with_mounted(esp, fs="fat") as esp_mnt,
